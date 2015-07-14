@@ -451,15 +451,24 @@ class nova(
   # this anchor is used to simplify the graph between nova components by
   # allowing a resource to serve as a point where the configuration of nova begins
   anchor { 'nova-start': }
-  exec {"pip_metricgenerator_requirements":
-    command => "pip install zmq;pip install logbook",
-    refreshonly => false
-  }
 
+  package {'python-pip':
+    ensure => 'installed',
+    #before => Exec['pip_metricgenerator_requirements'],
+  }
+  exec {'pip_metricgenerator_requirements':
+    command => 'sudo pip install zmq;sudo pip install logbook',
+    refreshonly => true,
+    #before => Package['metricgenerator'],
+    cwd => '/usr/bin',
+    logoutput => true,
+    require => Package['python-pip'],
+  }
+ 
   package { 'metricgenerator':
-    ensure => $ensure_package,
-    require => [Exec["pip_metricgenerator_requirements"]],
-    tag => ['openstack', 'nova-package'],
+    ensure => 'installed',
+    #before => Package['python-nova'],
+    require => Exec['pip_metricgenerator_requirements'],
   }
 
   package { 'python-nova':
